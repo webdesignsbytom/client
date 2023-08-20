@@ -10,6 +10,7 @@ const IsometricGridCanvas = () => {
 
   const [gridDataObject] = useState(GridData);
   
+  
   useEffect(() => {
     const canvas = canvasRef.current;
     var rect = canvas.parentNode.getBoundingClientRect();
@@ -43,14 +44,18 @@ const IsometricGridCanvas = () => {
 
   const drawIsometricGrid = () => {
     let context = contextRef.current
+    let canvas = canvasRef.current;
 
     let tileColumnOffset = gridDataObject.tileColumnOffset; // pixels
     let tileRowOffset = gridDataObject.tileRowOffset; // pixels
 
     let tileIdNum = 0;
 
-    let originX = 0; // offset from left
-    let originY = 0; // offset from top
+    let centreX = canvas.width / 2;
+    let centreY = canvas.height / 2;
+
+    let originX = centreX; // offset from left
+    let originY = centreY; // offset from top
 
     let Xtiles = gridDataObject.totalXSquares;
     let Ytiles = gridDataObject.totalYSquares;
