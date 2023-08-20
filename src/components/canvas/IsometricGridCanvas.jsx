@@ -9,7 +9,9 @@ const IsometricGridCanvas = () => {
   const gridRef = useRef([]);
 
   console.log('gridRef s', gridRef);
+
   const [gridDataObject, setGridDataObject] = useState(GridData);
+  
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -93,49 +95,27 @@ const IsometricGridCanvas = () => {
           (Yi * tileRowOffset) / 2 - (Xi * tileRowOffset) / 2 + originY;
 
         // Draw tile outline
-        let colour = '#999';
+        let colour = gridDataObject.colour;
+        console.log('colour', colour);
 
-        let gridSq = new TileObject(tileIdNum, offX, offY, tileColumnOffset, tileRowOffset, colour);
+        let gridSq = new TileObject(
+          tileIdNum,
+          offX,
+          offY,
+          tileColumnOffset,
+          tileRowOffset,
+          colour
+        );
 
         console.log('gridSq', gridSq);
 
         tileIdNum++;
 
-        gridSq.draw(
-          offX,
-          offY + tileRowOffset / 2,
-          offX + tileColumnOffset / 2,
-          offY,
-          colour,
-          context
-        );
-        gridSq.draw(
-          offX + tileColumnOffset / 2,
-          offY,
-          offX + tileColumnOffset,
-          offY + tileRowOffset / 2,
-          colour,
-          context
-        );
-        gridSq.draw(
-          offX + tileColumnOffset,
-          offY + tileRowOffset / 2,
-          offX + tileColumnOffset / 2,
-          offY + tileRowOffset,
-          colour,
-          context
-        );
-        gridSq.draw(
-          offX + tileColumnOffset / 2,
-          offY + tileRowOffset,
-          offX,
-          offY + tileRowOffset / 2,
-          colour,
-          context
-        );
+        gridSq.draw(colour, context);
 
         tempGridArray.push(gridSq);
       }
+
       console.log('tempGridArray', tempGridArray);
       gridRef.current = tempGridArray;
     }
