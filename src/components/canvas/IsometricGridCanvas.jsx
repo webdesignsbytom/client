@@ -1,7 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 // Data
 import { GridData } from '../../utils/data/GameGridData';
-import { TileObject } from './tileObject';
+import {
+  drawIsometricGrid,
+  findAndMarkCenterPoint,
+} from './setUp/SetUpFunctions';
+import { checkPointInPolygon } from './grid/GridFunctions';
 
 const IsometricGridCanvas = () => {
   const canvasRef = useRef(null);
@@ -9,8 +13,9 @@ const IsometricGridCanvas = () => {
   const gridRef = useRef([]);
 
   const [gridDataObject] = useState(GridData);
-  
-  
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+
   useEffect(() => {
     const canvas = canvasRef.current;
     var rect = canvas.parentNode.getBoundingClientRect();
@@ -28,111 +33,36 @@ const IsometricGridCanvas = () => {
     contextRef.current = context;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
-    findAndMarkCenterPoint(context, canvas);
-    drawIsometricGrid(context, canvas);
-  }, []);
-
-  const findAndMarkCenterPoint = (context, canvas) => {
-    let centreX = canvas.width / 2;
-    let centreY = canvas.height / 2;
-
-    context.beginPath();
-    context.arc(centreX, centreY, 5, 0, 2 * Math.PI);
-    context.fillStyle = 'black';
-    context.fill();
-  };
-
-  const drawIsometricGrid = () => {
-    let context = contextRef.current
-    let canvas = canvasRef.current;
-
-    let tileColumnOffset = gridDataObject.tileColumnOffset; // pixels
-    let tileRowOffset = gridDataObject.tileRowOffset; // pixels
-
-    let tileIdNum = 0;
-
-    let centreX = canvas.width / 2;
-    let centreY = canvas.height / 2;
-
-    let originX = centreX; // offset from left
-    let originY = centreY; // offset from top
-
-    let Xtiles = gridDataObject.totalXSquares;
-    let Ytiles = gridDataObject.totalYSquares;
-
-    let tempGridArray = gridRef.current;
-
-    createGridTiles(
-      tileColumnOffset,
-      tileRowOffset,
-      tileIdNum,
-      originX,
-      originY,
-      Xtiles,
-      Ytiles,
-      tempGridArray,
-      context
+    drawIsometricGrid(
+      contextRef,
+      canvasRef,
+      gridDataObject,
+      gridRef,
+      zoomLevel,
+      panOffset
     );
-
-    tempGridArray.forEach((tile) => {
-      const colour = tile.hovered ? 'blue' : tile.colour;
-      tile.draw(colour, context);
-    });
-  };
-
-  const createGridTiles = (
-    tileColumnOffset,
-    tileRowOffset,
-    tileIdNum,
-    originX,
-    originY,
-    Xtiles,
-    Ytiles,
-    tempGridArray,
-    context
-  ) => {
-    for (let Xi = 0; Xi < Xtiles; Xi++) {
-      for (let Yi = 0; Yi < Ytiles; Yi++) {
-        let offX =
-          (Xi * tileColumnOffset) / 2 + (Yi * tileColumnOffset) / 2 + originX;
-        let offY =
-          (Yi * tileRowOffset) / 2 - (Xi * tileRowOffset) / 2 + originY;
-
-        // Draw tile outline
-        let colour = gridDataObject.colour;
-
-        let gridSq = new TileObject(
-          tileIdNum,
-          offX,
-          offY,
-          tileColumnOffset,
-          tileRowOffset,
-          colour
-        );
-
-        tileIdNum++;
-
-        gridSq.draw(colour, context);
-
-        tempGridArray.push(gridSq);
-      }
-
-      gridRef.current = tempGridArray;
-    }
-  };
+    findAndMarkCenterPoint(context, canvas);
+  }, []);
 
   const selectTile = ({ nativeEvent }) => {
     const { offsetX, offsetY } = nativeEvent;
-  
+
     const clickedTile = gridRef.current.find((tile) =>
       checkPointInPolygon({ x: offsetX, y: offsetY }, tile.vertices)
     );
-  
+
     if (clickedTile) {
       clickedTile.selectTile();
     }
-  
-    drawIsometricGrid();
+
+    drawIsometricGrid(
+      contextRef,
+      canvasRef,
+      gridDataObject,
+      gridRef,
+      zoomLevel,
+      panOffset
+    );
   };
 
   const handleMouseMove = ({ nativeEvent }) => {
@@ -146,29 +76,48 @@ const IsometricGridCanvas = () => {
       tile.setHovered(isHovered);
     });
 
-    drawIsometricGrid();
+    drawIsometricGrid(
+      contextRef,
+      canvasRef,
+      gridDataObject,
+      gridRef,
+      zoomLevel,
+      panOffset
+    );
   };
 
-  const checkPointInPolygon = (point, vertices) => {
-    let collision = false;
-    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
-      const xi = vertices[i].x;
-      const yi = vertices[i].y;
-      const xj = vertices[j].x;
-      const yj = vertices[j].y;
+  // const handleWheel = (e) => {
+  //   e.preventDefault();
 
-      const intersect =
-        yi > point.y !== yj > point.y &&
-        point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
+  //   const scrollSpeed = 0.1; // Adjust the zooming speed as needed
+  //   const newZoomLevel = Math.max(0.1, zoomLevel + e.deltaY * scrollSpeed);
 
-      if (intersect) {
-        collision = !collision;
-      }
-    }
-    return collision;
-  };
+  //   const offsetX = (canvasRef.current.width / 2 - e.clientX) * scrollSpeed;
+  //   const offsetY = (canvasRef.current.height / 2 - e.clientY) * scrollSpeed;
 
-  return <canvas ref={canvasRef} onMouseDown={selectTile} onMouseMove={handleMouseMove} />;
+  //   setPanOffset((prevOffset) => ({
+  //     x: prevOffset.x + offsetX,
+  //     y: prevOffset.y + offsetY,
+  //   }));
+
+  //   setZoomLevel(newZoomLevel);
+  //   drawIsometricGrid(
+  //     contextRef,
+  //     canvasRef,
+  //     gridDataObject,
+  //     gridRef,
+  //     zoomLevel,
+  //     panOffset
+  //   );
+  // };
+
+  return (
+    <canvas
+      ref={canvasRef}
+      onMouseDown={selectTile}
+      onMouseMove={handleMouseMove}
+    />
+  );
 };
 
 export default IsometricGridCanvas;
