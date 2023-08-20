@@ -6,6 +6,9 @@ export class TileObject {
     this.tileColumnOffset = tileColumnOffset;
     this.tileRowOffset = tileRowOffset;
     this.colour = colour;
+    this.defaultColor = 'white';
+    this.hovered = false; // Initialize as not hovered
+    this.selected = false;
 
     // Define the vertices of the tile
     this.vertices = [
@@ -16,10 +19,10 @@ export class TileObject {
     ];
   }
 
-  // Draw the tile using stored vertices
   draw(color, context) {
     color = typeof color !== 'undefined' ? color : this.colour;
     context.strokeStyle = color;
+    context.fillStyle = this.backgroundColor; // Set the background color
     context.beginPath();
     context.lineWidth = 1;
 
@@ -32,5 +35,22 @@ export class TileObject {
     }
 
     context.stroke();
+    context.fill(); // Fill the tile with the background color
+  }
+  
+  setHovered(hovered) {
+    this.hovered = hovered;
+  }
+
+  selectTile() {
+    if (this.selected) {
+      console.log('Deselecting tile', this.id);
+      this.selected = false;
+      this.backgroundColor = 'white'; // Reset background color
+    } else {
+      console.log('Selecting tile', this.id);
+      this.selected = true;
+      this.backgroundColor = 'blue'; // Set background color to blue
+    }
   }
 }

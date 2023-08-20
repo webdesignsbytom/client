@@ -8,11 +8,8 @@ const IsometricGridCanvas = () => {
   const contextRef = useRef(null);
   const gridRef = useRef([]);
 
-  console.log('gridRef s', gridRef);
-
-  const [gridDataObject, setGridDataObject] = useState(GridData);
+  const [gridDataObject] = useState(GridData);
   
-
   useEffect(() => {
     const canvas = canvasRef.current;
     var rect = canvas.parentNode.getBoundingClientRect();
@@ -23,9 +20,6 @@ const IsometricGridCanvas = () => {
     canvas.height = rect.height;
     canvas.style.width = `${rect.width}px`;
     canvas.style.height = `${rect.height}px`;
-
-    console.log('canvas.width: ', canvas.width);
-    console.log('canvas.height: ', canvas.height);
 
     const context = canvas.getContext('2d');
 
@@ -40,8 +34,6 @@ const IsometricGridCanvas = () => {
   const findAndMarkCenterPoint = (context, canvas) => {
     let centreX = canvas.width / 2;
     let centreY = canvas.height / 2;
-    console.log('centreX', centreX);
-    console.log('centrey', centreY);
 
     context.beginPath();
     context.arc(centreX, centreY, 5, 0, 2 * Math.PI);
@@ -49,7 +41,9 @@ const IsometricGridCanvas = () => {
     context.fill();
   };
 
-  const drawIsometricGrid = (context, canvas) => {
+  const drawIsometricGrid = () => {
+    let context = contextRef.current
+
     let tileColumnOffset = gridDataObject.tileColumnOffset; // pixels
     let tileRowOffset = gridDataObject.tileRowOffset; // pixels
 
@@ -74,6 +68,11 @@ const IsometricGridCanvas = () => {
       tempGridArray,
       context
     );
+
+    tempGridArray.forEach((tile) => {
+      const colour = tile.hovered ? 'blue' : tile.colour;
+      tile.draw(colour, context);
+    });
   };
 
   const createGridTiles = (
@@ -96,7 +95,6 @@ const IsometricGridCanvas = () => {
 
         // Draw tile outline
         let colour = gridDataObject.colour;
-        console.log('colour', colour);
 
         let gridSq = new TileObject(
           tileIdNum,
@@ -107,8 +105,6 @@ const IsometricGridCanvas = () => {
           colour
         );
 
-        console.log('gridSq', gridSq);
-
         tileIdNum++;
 
         gridSq.draw(colour, context);
@@ -116,18 +112,58 @@ const IsometricGridCanvas = () => {
         tempGridArray.push(gridSq);
       }
 
-      console.log('tempGridArray', tempGridArray);
       gridRef.current = tempGridArray;
     }
   };
 
-  const getMouse = ({ nativeEvent }) => {
+  const selectTile = ({ nativeEvent }) => {
     const { offsetX, offsetY } = nativeEvent;
-    console.log('offsetX', offsetX);
-    console.log('offsetY', offsetY);
+  
+    const clickedTile = gridRef.current.find((tile) =>
+      checkPointInPolygon({ x: offsetX, y: offsetY }, tile.vertices)
+    );
+  
+    if (clickedTile) {
+      clickedTile.selectTile();
+    }
+  
+    drawIsometricGrid();
   };
 
-  return <canvas ref={canvasRef} onMouseDown={getMouse} />;
+  const handleMouseMove = ({ nativeEvent }) => {
+    const { offsetX, offsetY } = nativeEvent;
+
+    gridRef.current.forEach((tile) => {
+      const isHovered = checkPointInPolygon(
+        { x: offsetX, y: offsetY },
+        tile.vertices
+      );
+      tile.setHovered(isHovered);
+    });
+
+    drawIsometricGrid();
+  };
+
+  const checkPointInPolygon = (point, vertices) => {
+    let collision = false;
+    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+      const xi = vertices[i].x;
+      const yi = vertices[i].y;
+      const xj = vertices[j].x;
+      const yj = vertices[j].y;
+
+      const intersect =
+        yi > point.y !== yj > point.y &&
+        point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
+
+      if (intersect) {
+        collision = !collision;
+      }
+    }
+    return collision;
+  };
+
+  return <canvas ref={canvasRef} onMouseDown={selectTile} onMouseMove={handleMouseMove} />;
 };
 
 export default IsometricGridCanvas;
