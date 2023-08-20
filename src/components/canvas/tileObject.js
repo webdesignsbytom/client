@@ -1,8 +1,10 @@
 export class TileObject {
-  constructor(id, offX, offY, colour) {
+  constructor(id, offX, offY, tileColumnOffset, tileRowOffset, colour) {
     this.id = id;
     this.offX = offX;
     this.offY = offY;
+    this.tileColumnOffset = tileColumnOffset;
+    this.tileRowOffset = tileRowOffset;
     this.colour = colour;
   }
 
@@ -14,6 +16,5 @@ export class TileObject {
     context.moveTo(x1, y1);
     context.lineTo(x2, y2);
     context.stroke();
-    console.log('DRAWWWWWWWWW');
   }
 }

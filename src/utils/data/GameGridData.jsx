@@ -1,6 +1,6 @@
 export const GridData = {
-    totalXSquares: 40,
-    totalYSquares: 40,
+    totalXSquares: 10,
+    totalYSquares: 10,
     tileColumnOffset: 64, // pixels
     tileRowOffset: 32, // pixels
 }
