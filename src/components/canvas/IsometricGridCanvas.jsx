@@ -1,11 +1,14 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+// Data
+import { GridData } from '../../utils/data/GameGridData';
+import { TileObject } from './tileObject';
 
 const IsometricGridCanvas = () => {
   const canvasRef = useRef(null);
   const contextRef = useRef(null);
   const gridRef = useRef([]);
-  const availableGridSquareRef = useRef(12);
-  const maxGridSquareRef = useRef(120);
+
+  const [gridDataObject, setGridDataObject] = useState(GridData);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -19,64 +22,104 @@ const IsometricGridCanvas = () => {
     canvas.style.height = `${rect.height}px`;
 
     console.log('canvas.width: ', canvas.width);
+    console.log('canvas.height: ', canvas.height);
+
     const context = canvas.getContext('2d');
 
     context.scale(1, 1);
-    // context.lineCap = 'round';
-    // context.strokeStyle = 'black';
-    // context.lineWidth = 1;
     contextRef.current = context;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
-    console.log('AAA');
+    findAndMarkCenterPoint(context, canvas);
     drawIsometricGrid(context, canvas);
   }, []);
 
-  const projectIsometric = (x, y, z) => {
-    const projectionX = (x - y) * Math.cos(Math.PI / 6);
-    const projectionY = (x + y) * Math.sin(Math.PI / 6) - z;
-    return { x: projectionX, y: projectionY };
+  const findAndMarkCenterPoint = (context, canvas) => {
+    let centreX = canvas.width / 2;
+    let centreY = canvas.height / 2;
+    console.log('centreX', centreX);
+    console.log('centrey', centreY);
+
+    context.beginPath();
+    context.arc(centreX, centreY, 5, 0, 2 * Math.PI);
+    context.fillStyle = "black";
+    context.fill();
   };
 
   const drawIsometricGrid = (context, canvas) => {
-    const totalGridSquares = maxGridSquareRef.current;
-    let numSqCreated = 0;
-    let gridSize = 20;
-  
-    // Calculate the center of the canvas
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-  
-    for (let row = 0; row < 6; row++) {
-      for (let col = 0; col < 20; col++) {
-        if (numSqCreated < 3) {
-          // Calculate the coordinates for the center-aligned grid
-          let x = centerX - (10 * gridSize) + col * gridSize;
-          let y = centerY - (3 * gridSize) + row * gridSize;
-  
-          let projected = projectIsometric(x, y, 0);
-          context.beginPath();
-          context.moveTo(projected.x, projected.y);
-  
-          projected = projectIsometric(x + gridSize, y, 0);
-          context.lineTo(projected.x, projected.y);
-  
-          projected = projectIsometric(x + gridSize, y + gridSize, 0);
-          context.lineTo(projected.x, projected.y);
-  
-          projected = projectIsometric(x, y + gridSize, 0);
-          context.lineTo(projected.x, projected.y);
-  
-          context.closePath();
-          context.strokeStyle = '#333';
-          context.stroke();
-  
-          numSqCreated++;
-        }
-      }
-    }
-  
+    let tileColumnOffset = gridDataObject.tileColumnOffset; // pixels
+    let tileRowOffset = gridDataObject.tileRowOffset; // pixels
 
+    let tileIdNum = 0;
+
+    let originX = 0; // offset from left
+    let originY = 0; // offset from top
+
+    let Xtiles = gridDataObject.totalXSquares;
+    let Ytiles = gridDataObject.totalYSquares;
+
+    let tempGridArray = gridRef.current
+
+    for (let Xi = 0; Xi < Xtiles; Xi++) {
+      for (let Yi = 0; Yi < Ytiles; Yi++) {
+        
+        let offX =
+          (Xi * tileColumnOffset) / 2 + (Yi * tileColumnOffset) / 2 + originX;
+        let offY =
+          (Yi * tileRowOffset) / 2 - (Xi * tileRowOffset) / 2 + originY;
+
+        // Draw tile outline
+        let color = '#999';
+        let colour = '#999';
+
+        let gridSq = new TileObject(
+          tileIdNum,
+          offX,
+          offY,
+          colour,
+        )
+
+        console.log('gridSq', gridSq);
+
+        tileIdNum++;
+
+        gridSq.draw(
+          offX,
+          offY + tileRowOffset / 2,
+          offX + tileColumnOffset / 2,
+          offY,
+          color,
+          context
+        );
+        gridSq.draw(
+          offX + tileColumnOffset / 2,
+          offY,
+          offX + tileColumnOffset,
+          offY + tileRowOffset / 2,
+          color,
+          context
+        );
+        gridSq.draw(
+          offX + tileColumnOffset,
+          offY + tileRowOffset / 2,
+          offX + tileColumnOffset / 2,
+          offY + tileRowOffset,
+          color,
+          context
+        );
+        gridSq.draw(
+          offX + tileColumnOffset / 2,
+          offY + tileRowOffset,
+          offX,
+          offY + tileRowOffset / 2,
+          color,
+          context
+        );
+
+        tempGridArray.push(gridSq)
+      }
+      console.log('tempGridArray', tempGridArray);
+    }
   };
 
   const getMouse = ({ nativeEvent }) => {
